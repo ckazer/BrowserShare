@@ -3,10 +3,10 @@
   "description": "Extension that allows users to share a browser.",
   "version": "1.0",
   "permissions": [
-    "activeTab", "tabs"
+    "activeTab", "tabs", "http://127.0.0.1:8000/"
   ],
   "background": {
-    "scripts": ["background.js"],
+    "scripts": ["background.js"]
   },
   "browser_action": {
     "defualt_title": "Initialize Browser Sharing"
