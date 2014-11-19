@@ -9,7 +9,7 @@
     "scripts": ["background.js"]
   },
   "browser_action": {
-    "defualt_title": "Initialize Browser Sharing"
+    "default_title": "Initialize Browser Sharing"
   },
   "manifest_version": 2
 }
