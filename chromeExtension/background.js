@@ -2,7 +2,7 @@ var PING_INTERVAL = 3000;
 var extensionOn = false;
 
 // TODO: HTTP Get Security?
-// TODO: Initialization - Provide URL/IP ADDR to server.
+// Later TODO: Initialization - Tell server if master or slave.
 // Currently - Turns extension on and off to periodically ping server.
 chrome.browserAction.onClicked.addListener(function(tab) {
   extensionOn = !(extensionOn);
@@ -17,7 +17,7 @@ chrome.browserAction.onClicked.addListener(function(tab) {
 });
 
 
-// TODO: Upon visit to new URL, tell other clients to change to said URL.
+// TODO: Upon visit to new URL, tell server of new URL.
 // Currently - Changes all open tabs to new URL. 
 chrome.tabs.onUpdated.addListener(function(tabId, changeInfo, tab) {
   if (extensionOn) {
