@@ -1,7 +1,8 @@
 var PING_INTERVAL = 3000;
 var extensionOn = false;
 
-// TODO: Initialization - Provide URL/IP ADDR to server. Listen for updates.
+// TODO: HTTP Get Security?
+// TODO: Initialization - Provide URL/IP ADDR to server.
 // Currently - Turns extension on and off to periodically ping server.
 chrome.browserAction.onClicked.addListener(function(tab) {
   extensionOn = !(extensionOn);
@@ -15,8 +16,9 @@ chrome.browserAction.onClicked.addListener(function(tab) {
 
 });
 
+
 // TODO: Upon visit to new URL, tell other clients to change to said URL.
-// Currently - Changes all open tabs to new URL.
+// Currently - Changes all open tabs to new URL. 
 chrome.tabs.onUpdated.addListener(function(tabId, changeInfo, tab) {
   if (extensionOn) {
     chrome.tabs.query({'lastFocusedWindow': true}, function(allTabs) {
@@ -28,26 +30,46 @@ chrome.tabs.onUpdated.addListener(function(tabId, changeInfo, tab) {
   }
 });
 
+
+// TODO: Convert periodic action from pinging to listening for updates.
 function startExtension() {
   console.log("Extension is on");
-  sendPing();
+  sendRequest("ping", ["sender=masterClient"], function(response) {
+    console.log(response.message);
+  });
 
   timerId = window.setTimeout(startExtension, PING_INTERVAL);
 }
+
 
 function stopExtension() {
   clearTimeout(timerId);
   console.log("Extension is off.");
 }
 
-function sendPing() {
+
+function sendRequest(action, params, callback) {
+    var url = createURL(action, params);
     var xhr = new XMLHttpRequest();
     xhr.onreadystatechange = function() {
         if (xhr.readyState == 4 && xhr.status==200) {
-          console.log(xhr.responseText);
+          var data = JSON.parse(xhr.responseText);
+          callback(data);
         }
     };
-    xhr.open("POST", "http://127.0.0.1:8880/ping?color=red", true);
-    //xhr.setRequestHeader();
+    xhr.open("POST", url, true);
+    //xhr.open("POST", "http://127.0.0.1:8880/ping?sender=masterClient", true);
+    //xhr.setRequestHeader(); 
     xhr.send();
+}
+
+
+function createURL(action, params) {
+  var url = "http://127.0.0.1:8880/";
+  url += action;
+  url += "?";
+  for (i in params) {
+    url += params[i];
+  }
+  return url;
 }

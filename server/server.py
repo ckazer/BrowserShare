@@ -19,7 +19,7 @@ class Ping(Resource):
          #request.setHeader('Access-Control-Allow-Origin', '*')
          #request.setHeader('Access-Control-Max-Age', 120)
          
-         return 'Ping from client!'
+         return '{ "message": "Ping from client!" }'
 
 class URL_Update(Resource):
      isLeaf = True
@@ -29,7 +29,7 @@ class URL_Update(Resource):
 
          request.setHeader('Access-Control-Allow-Origin', '*')
 
-         return 'Request to update URL.'
+         return '{ "message": "Request to update URL." }'
 
 root = Resource()
 root.putChild("ping", Ping())
