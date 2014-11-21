@@ -1,8 +1,9 @@
 from twisted.web.server import Site
 from twisted.web.resource import Resource
 from twisted.internet import reactor
+import json
 
-masterURL = ""
+masterURL = {"curURL": "http://google.com"}
 
 class Ping(Resource):
      isLeaf = True
@@ -10,16 +11,13 @@ class Ping(Resource):
      def render_POST(self, request):
          print 'Request is:', request
 
-         global masterURL
-         masterURL = request.uri.split('?')[1][1:] #parses only the url
-         print "masterURL: " + masterURL
-
          request.setHeader('Access-Control-Allow-Origin', '*')
          #request.setHeader('Access-Control-Allow-Methods', 'POST')
          #request.setHeader('Access-Control-Allow-Origin', '*')
          #request.setHeader('Access-Control-Max-Age', 120)
          
-         return '{ "message": "Ping from client!" }'
+         global masterURL
+         return json.dumps(masterURL)
 
 # TODO: Add server logic for URL reception.
 class URL_Update(Resource):
@@ -29,6 +27,12 @@ class URL_Update(Resource):
          print 'Request is:', request
 
          request.setHeader('Access-Control-Allow-Origin', '*')
+
+         global masterURL
+         masterURL["curURL"] = \
+                 request.uri.split('url=')[1] #parses only the url
+         print "masterURL: " + masterURL["curURL"]
+         print "\n"
 
          return '{ "message": true }'
 
