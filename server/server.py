@@ -21,6 +21,7 @@ class Ping(Resource):
          
          return '{ "message": "Ping from client!" }'
 
+# TODO: Add server logic for URL reception.
 class URL_Update(Resource):
      isLeaf = True
 
@@ -29,7 +30,7 @@ class URL_Update(Resource):
 
          request.setHeader('Access-Control-Allow-Origin', '*')
 
-         return '{ "message": "Request to update URL." }'
+         return '{ "message": true }'
 
 root = Resource()
 root.putChild("ping", Ping())

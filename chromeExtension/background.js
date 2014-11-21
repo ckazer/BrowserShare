@@ -21,11 +21,20 @@ chrome.browserAction.onClicked.addListener(function(tab) {
 // Currently - Changes all open tabs to new URL. 
 chrome.tabs.onUpdated.addListener(function(tabId, changeInfo, tab) {
   if (extensionOn) {
-    chrome.tabs.query({'lastFocusedWindow': true}, function(allTabs) {
-      for (var i=0; i < allTabs.length; i+=1) {
-        chrome.tabs.update(allTabs[i].id, {'url': changeInfo.url},
-          function(){}); 
-      };
+    // chrome.tabs.query({'lastFocusedWindow': true}, function(allTabs) {
+    //   for (var i=0; i < allTabs.length; i+=1) {
+    //     chrome.tabs.update(allTabs[i].id, {'url': changeInfo.url},
+    //       function(){}); 
+    //   };
+    // });
+
+    sendRequest("URL_update", ["url=" + tab.url], function(response) {
+      if (response.message == true) {
+        console.log("Server received updated URL.");
+      }
+      else {
+        console.log("Server did not receive updated URL.")
+      }
     });
   }
 });
@@ -34,7 +43,7 @@ chrome.tabs.onUpdated.addListener(function(tabId, changeInfo, tab) {
 // TODO: Convert periodic action from pinging to listening for updates.
 function startExtension() {
   console.log("Extension is on");
-  sendRequest("ping", ["sender=masterClient"], function(response) {
+  sendRequest("ping", ["sender=masterClient", "rock=solid"], function(response) {
     console.log(response.message);
   });
 
@@ -47,7 +56,12 @@ function stopExtension() {
   console.log("Extension is off.");
 }
 
-
+/* sendRequest - Sends a GET request to server.
+ * @param:
+ *   action - A string representing the action server needs to respond to.
+ *   params - List of strings to be added to GET request URL.
+ *   callback - Callback function for server response.
+ */
 function sendRequest(action, params, callback) {
     var url = createURL(action, params);
     var xhr = new XMLHttpRequest();
@@ -63,13 +77,22 @@ function sendRequest(action, params, callback) {
     xhr.send();
 }
 
-
+/* createURL - Helper function to create a URL string.
+ * @param:
+ *   action - A string representing action server needs to respond to.
+ *   params - List of strings to be added to GET request URL.
+ * @return:
+ *   url - A string representing the constructed URL.
+ */
 function createURL(action, params) {
   var url = "http://127.0.0.1:8880/";
   url += action;
   url += "?";
   for (i in params) {
     url += params[i];
+    if (i != params.length-1) {
+      url += "&";
+    }
   }
   return url;
 }
