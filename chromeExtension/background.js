@@ -1,19 +1,31 @@
 var PING_INTERVAL = 3000;
 var CHROME_TAB_LOADED = "complete";
 var extensionOn = false;
+var serverURL = undefined;
+
 var updateInflight = false; // Replace with better consistency model/algorithm?
+//TODO: Replace with incrementing request id.
 var oldURL = undefined;
-//records the old URL so updates aren't duplicated
+
 
 // TODO: HTTP Get Security?
+// TODO: Initialization - Determine server URL.
 // Later TODO: Initialization - Tell server if master or slave.
 // Currently - Turns extension on and off to periodically ping server.
 chrome.browserAction.onClicked.addListener(function(tab) {
   extensionOn = !(extensionOn);
 
-  if (extensionOn) {
-    console.log("Extension is on");
-    startExtension();
+  if (extensionOn) { 
+    var input = initExtension();
+
+    if (input != null) {
+      console.log("Extension is on");
+      startExtension(); //TODO: Add 'input' as parameter.
+    }
+    else {
+      extensionOn = false;
+      console.log("Null URL entered. Extension turned off.");
+    }
   }
   else {
     console.log("Extension is off.");
@@ -59,8 +71,19 @@ chrome.tabs.onUpdated.addListener(function(tabId, changeInfo, tab) {
   }
 });
 
+
+//TODO: Check user input for valid remote server URL.
+function initExtension() {
+  var input = window.prompt("Please enter URL of server.", "Server URL");
+  if (input == null) {
+    return null;
+  }
+  return input;
+}
+
+
 // Later TODO: Affect only a unique tab instead of 'active' tabs?
-// TODO: Convert periodic action from pinging to listening for updates.
+// TODO: Account for inputted server URL.
 function startExtension() {
   sendRequest("ping", ["sender=masterClient"], function(response) {
         console.log("Server URL: " + response.curURL);
@@ -84,6 +107,7 @@ function startExtension() {
 
 function stopExtension() {
   clearTimeout(timerId);
+  serverURL = undefined;
 }
 
 /* sendRequest - Sends a GET request to server.
