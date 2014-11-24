@@ -1,3 +1,25 @@
+/*******(╯°□°）╯︵ ┻━┻-----------TODO-----------┬──┬◡ﾉ(° -°ﾉ)***************/
+/*
+ * Functionality: 1. Connect to EC2
+ *                2. Add increasing integer to track current page
+ *                3. Is there a way to handle repeated, quick navigations?
+ *                4. Research/add highlighting
+ *                5. Write content script for highlighting
+ *
+ * Follow-up/polishing: 1. Robust code for initially connecting to server
+ *                      2. Master/slave mode
+ *                      3. Set text from text box
+ *                      4. Democratic vote mode?
+ *
+ * Experiments: 1. Does it even funciton?
+ *              2. How quickly can we send pings before it breaks?
+ *              3. How much overhead is associated with the ping?
+ *              4. 
+*/
+/*******(」゜ロ゜)」--------------------------------щ(゜ロ゜щ)**************/
+
+
+
 var PING_INTERVAL = 3000;
 var CHROME_TAB_LOADED = "complete";
 var extensionOn = false;
