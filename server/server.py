@@ -3,7 +3,7 @@ from twisted.web.resource import Resource
 from twisted.internet import reactor
 import json
 
-masterURL = {"curURL": "http://google.com"}
+masterURL = {"curURL": "http://cs.swarthmore.edu"}
 
 class Ping(Resource):
      isLeaf = True
