@@ -31,7 +31,6 @@ var oldURL = undefined;
 
 
 // TODO: HTTP Get Security?
-// TODO: Initialization - Determine server URL.
 // Later TODO: Initialization - Tell server if master or slave.
 // Currently - Turns extension on and off to periodically ping server.
 chrome.browserAction.onClicked.addListener(function(tab) {
@@ -42,7 +41,7 @@ chrome.browserAction.onClicked.addListener(function(tab) {
 
     if (input != null) {
       console.log("Extension is on");
-      startExtension(); //TODO: Add 'input' as parameter.
+      startExtension();
     }
     else {
       extensionOn = false;
@@ -95,11 +94,13 @@ chrome.tabs.onUpdated.addListener(function(tabId, changeInfo, tab) {
 
 
 //TODO: Check user input for valid remote server URL.
+/* initExtension - sets up connection to server, or returns null if cancelled*/
 function initExtension() {
   var input = window.prompt("Please enter URL of server.", "Server URL");
   if (input == null) {
     return null;
   }
+  serverURL = input
   return input;
 }
 
@@ -161,7 +162,7 @@ function sendRequest(action, params, callback) {
  *   url - A string representing the constructed URL.
  */
 function createURL(action, params) {
-  var url = "http://127.0.0.1:8880/";
+  var url = serverURL;
   url += action;
   url += "?";
   for (i in params) {
