@@ -2,8 +2,9 @@ from twisted.web.server import Site
 from twisted.web.resource import Resource
 from twisted.internet import reactor
 import json
+import urllib
 
-masterURL = {"curURL": "http://cs.swarthmore.edu"}
+masterInfo = {"curURL": "http://cs.swarthmore.edu", "count": -1}
 
 class Ping(Resource):
      isLeaf = True
@@ -16,8 +17,8 @@ class Ping(Resource):
          #request.setHeader('Access-Control-Allow-Origin', '*')
          #request.setHeader('Access-Control-Max-Age', 120)
          
-         global masterURL
-         return json.dumps(masterURL)
+         global masterInfo
+         return json.dumps(masterInfo)
 
 # TODO: Add server logic for URL reception.
 class URL_Update(Resource):
@@ -28,11 +29,20 @@ class URL_Update(Resource):
 
          request.setHeader('Access-Control-Allow-Origin', '*')
 
-         global masterURL
-         masterURL["curURL"] = \
-                 request.uri.split('url=')[1] #parses only the url
-         print "masterURL: " + masterURL["curURL"]
-         print "\n"
+         global masterInfo
+         tokens = request.uri.split('?')[1]
+         tokens = tokens.split('&')
+         for element in range(len(tokens)):
+             tokens[element] = urllib.unquote(tokens[element])
+             print tokens[element]
+
+         #This is messy, but it works. Try to clean up later?
+         #tokens[0] is url=... tokens[1] is counter=...
+
+         masterInfo["curURL"] = tokens[0][4:]
+         masterInfo["count"] = tokens[1].split('=')[1]
+         print "masterURL: " + masterInfo["curURL"]
+         print "masterCount: " + masterInfo["count"]
 
          return '{ "message": true }'
 
