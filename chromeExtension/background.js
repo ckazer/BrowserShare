@@ -28,6 +28,7 @@ var serverURL = undefined;
 var updateInflight = false; // Replace with better consistency model/algorithm?
 //TODO: Replace with incrementing request id.
 var oldURL = undefined;
+var counter = 0;
 
 
 // TODO: HTTP Get Security?
@@ -68,11 +69,12 @@ chrome.tabs.onUpdated.addListener(function(tabId, changeInfo, tab) {
     if (changeInfo.url != undefined || tab.url != oldURL) {
       // Accounts for two ways URL updates are reflected in Chrome.
       if (changeInfo.url != undefined) {
-        params = ["url=" + changeInfo.url];
+        params = ["url=" + changeInfo.url, "counter=" + counter.toString()];
       }
       else if (tab.url != oldURL) {
-        params = ["url=" + tab.url];
+        params = ["url=" + tab.url, "counter=" + counter.toString()];
       }
+      counter ++;
 
       updateInflight = true; // Temporary "consistency model~"
       // Send request only once, when tab has completely loaded new URL.
@@ -112,12 +114,11 @@ function startExtension() {
         console.log("Server URL: " + response.curURL);
         if (updateInflight == false) {
           chrome.tabs.query({'lastFocusedWindow': true, 'active': true}, 
-            function(allTabs) {
-              for(var i=0; i<allTabs.length; i+=1){
-                if(allTabs[i].url != response.curURL){
-                  chrome.tabs.update(allTabs[i].id, {'url': response.curURL},
-                    function(){});
-                }
+            function(curTab) {
+              if((curTab[0].url != response.curURL)
+                                          && (counter > response.counter)){
+                chrome.tabs.update(curTab[0].id, {'url': response.curURL},
+                  function(){});
               }
               oldURL = response.curURL;
             });
@@ -166,7 +167,7 @@ function createURL(action, params) {
   url += action;
   url += "?";
   for (i in params) {
-    url += params[i];
+    url += encodeURIComponent(params[i]);
     if (i != params.length-1) {
       url += "&";
     }
