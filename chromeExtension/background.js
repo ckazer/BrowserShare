@@ -26,9 +26,9 @@ var extensionOn = false;
 var serverURL = undefined;
 
 var updateInflight = false; // Replace with better consistency model/algorithm?
-//TODO: Replace with incrementing request id.
 var oldURL = undefined;
 var counter = 0;
+var launchedTab = undefined;
 
 
 // TODO: HTTP Get Security?
@@ -74,11 +74,12 @@ chrome.tabs.onUpdated.addListener(function(tabId, changeInfo, tab) {
       else if (tab.url != oldURL) {
         params = ["url=" + tab.url, "counter=" + counter.toString()];
       }
-      counter ++;
 
       updateInflight = true; // Temporary "consistency model~"
       // Send request only once, when tab has completely loaded new URL.
       if (changeInfo.status == CHROME_TAB_LOADED) {
+        counter ++; //Counter gets incremented here because it's certain
+                    //this happens once per update
         sendRequest("URL_update", params, function(response) {
           if (response.message == true) {
             console.log("Server received updated URL.");

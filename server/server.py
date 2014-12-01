@@ -30,21 +30,29 @@ class URL_Update(Resource):
          request.setHeader('Access-Control-Allow-Origin', '*')
 
          global masterInfo
-         tokens = request.uri.split('?')[1]
-         tokens = tokens.split('&')
-         for element in range(len(tokens)):
-             tokens[element] = urllib.unquote(tokens[element])
-             print tokens[element]
+         tokens = assembleTokens(request)
 
          #This is messy, but it works. Try to clean up later?
          #tokens[0] is url=... tokens[1] is counter=...
 
-         masterInfo["curURL"] = tokens[0][4:]
+         masterInfo["curURL"] = tokens[0][4:] #first for chars are 'url='
          masterInfo["count"] = tokens[1].split('=')[1]
+
          print "masterURL: " + masterInfo["curURL"]
          print "masterCount: " + masterInfo["count"]
 
          return '{ "message": true }'
+
+def assembleTokens(request):
+
+    tokens = request.uri.split('?')[1] #separate server url from query
+    tokens = tokens.split('&') #Each query element is separated by a &
+    for element in range(len(tokens)):
+        tokens[element] = urllib.unquote(tokens[element])
+        #print tokens[element]
+
+    return tokens
+
 
 root = Resource()
 root.putChild("ping", Ping())
