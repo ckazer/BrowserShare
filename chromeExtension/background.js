@@ -57,6 +57,18 @@ chrome.browserAction.onClicked.addListener(function(tab) {
 
 });
 
+// Attempts to catch when preloading changes the ID of a tab, and updates
+// launchedTab
+chrome.tabs.onReplaced.addListener(function(addedTabId, removedTabId){
+  console.log("TAB WAS REPLACED");
+  console.log("launchedTab: " + launchedTab.toString());
+  console.log("removedTabId: " + removedTabId.toString());
+  console.log("addedTabId: " + addedTabId.toString());
+  if(removedTabId == launchedTab){
+    launchedTab = addedTabId;
+  }
+});
+
 // NOTE: Apparently Chrome does not always pick up rapid tab changes
 //       and instead attempts to reload the current URL.
 // Upon visit to new URL, tell server of new URL.
@@ -107,9 +119,12 @@ chrome.tabs.onUpdated.addListener(function(tabId, changeInfo, tab) {
 
 //TODO: Check user input for valid remote server URL.
 /* initExtension -
- * sets up connection to server, or returns null if cancelled
- * Also sets the launchedTab variable which restricts the extension
+ * Sets up connection to server, or returns null if cancelled
+ * 
+ * Sets the launchedTab variable which restricts the extension
  * to work only on the launchedTab
+ * 
+ * Sets the ID of the extension to be a master or slave
  * */
 function initExtension() {
 
@@ -141,9 +156,10 @@ function startExtension() {
             function(curTab) {
               if((curTab[0].url != response.curURL) && 
                        (curTab[0].id == launchedTab) && 
-                              (counter > response.counter)){
+                              (counter < response.counter)){
                 chrome.tabs.update(curTab[0].id, {'url': response.curURL},
                   function(){});
+                counter = response.counter;
               }
               oldURL = response.curURL;
             });
