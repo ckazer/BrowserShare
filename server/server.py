@@ -35,7 +35,7 @@ class URL_Update(Resource):
          #This is messy, but it works. Try to clean up later?
          #tokens[0] is url=... tokens[1] is counter=...
 
-         masterInfo["curURL"] = tokens[0][4:] #first for chars are 'url='
+         masterInfo["curURL"] = tokens[0][4:] #first four chars are 'url='
          masterInfo["count"] = tokens[1].split('=')[1]
 
          print "masterURL: " + masterInfo["curURL"]
