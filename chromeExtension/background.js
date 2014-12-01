@@ -74,8 +74,8 @@ chrome.tabs.onReplaced.addListener(function(addedTabId, removedTabId){
 // Upon visit to new URL, tell server of new URL.
 // TODO: When the URL is forced to change after a ping, this gets called.
 chrome.tabs.onUpdated.addListener(function(tabId, changeInfo, tab) {
-  // console.log("ID: " + ID);
-  if (extensionOn /*&& (ID=="m")*/) {
+  console.log("ID: " + ID);
+  if (extensionOn && (ID=="m")) {
     chrome.tabs.query({'lastFocusedWindow': true, 'active': true}, 
       function(curTab) {
 
@@ -139,7 +139,7 @@ function initExtension() {
       launchedTab = curTab[0].id;
   });
 
-  // ID = window.prompt("Are you participating as a master(m) or slave(s)?");
+  ID = window.prompt("Are you participating as a master(m) or slave(s)?");
 
   serverURL = input;
   return input;
