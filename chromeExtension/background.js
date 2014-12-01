@@ -29,6 +29,7 @@ var updateInflight = false; // Replace with better consistency model/algorithm?
 var oldURL = undefined;
 var counter = 0;
 var launchedTab = undefined;
+var ID = undefined;
 
 
 // TODO: HTTP Get Security?
@@ -61,17 +62,19 @@ chrome.browserAction.onClicked.addListener(function(tab) {
 // Upon visit to new URL, tell server of new URL.
 // TODO: When the URL is forced to change after a ping, this gets called.
 chrome.tabs.onUpdated.addListener(function(tabId, changeInfo, tab) {
-  if (extensionOn) {
+  // console.log("ID: " + ID);
+  if (extensionOn /*&& (ID=="m")*/) {
     chrome.tabs.query({'lastFocusedWindow': true, 'active': true}, 
       function(curTab) {
 
       // console.log(changeInfo);
       // console.log("Tab: " + tab.url);
       // console.log("OldURL: " + oldURL);
-      //console.log("launchedTab: " + launchedTab.toString());
+      
+      // console.log("launchedTab: " + launchedTab.toString());
+      // console.log("CURR TAB: " + curTab[0].id.toString());
       if (((changeInfo.url != undefined) || (tab.url != oldURL)) 
                      && curTab[0].id == launchedTab) {
-        //console.log("CURR TAB: " + curTab[0].id.toString());
         // Accounts for two ways URL updates are reflected in Chrome.
         if (changeInfo.url != undefined) {
           params = ["url=" + changeInfo.url, "counter=" + counter.toString()];
@@ -121,6 +124,8 @@ function initExtension() {
       launchedTab = curTab[0].id;
   });
 
+  // ID = window.prompt("Are you participating as a master(m) or slave(s)?");
+
   serverURL = input;
   return input;
 }
@@ -153,6 +158,7 @@ function stopExtension() {
   clearTimeout(timerId);
   serverURL = undefined;
   launchedTab = undefined;
+  ID = undefined;
 }
 
 /* sendRequest - Sends a GET request to server.
