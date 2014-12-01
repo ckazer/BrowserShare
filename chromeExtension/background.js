@@ -1,7 +1,7 @@
 /*******(╯°□°）╯︵ ┻━┻-----------TODO-----------┬──┬◡ﾉ(° -°ﾉ)***************/
 /*
  * Functionality: 1. Connect to EC2
- *                2. Add increasing integer to track current page
+ *                2. Add increasing integer to track current page -- DONE
  *                3. Is there a way to handle repeated, quick navigations?
  *                4. Research/add highlighting
  *                5. Write content script for highlighting
@@ -62,48 +62,66 @@ chrome.browserAction.onClicked.addListener(function(tab) {
 // TODO: When the URL is forced to change after a ping, this gets called.
 chrome.tabs.onUpdated.addListener(function(tabId, changeInfo, tab) {
   if (extensionOn) {
-    // console.log(changeInfo);
-    // console.log("Tab: " + tab.url);
-    // console.log("OldURL: " + oldURL);
-    
-    if (changeInfo.url != undefined || tab.url != oldURL) {
-      // Accounts for two ways URL updates are reflected in Chrome.
-      if (changeInfo.url != undefined) {
-        params = ["url=" + changeInfo.url, "counter=" + counter.toString()];
-      }
-      else if (tab.url != oldURL) {
-        params = ["url=" + tab.url, "counter=" + counter.toString()];
-      }
+    chrome.tabs.query({'lastFocusedWindow': true, 'active': true}, 
+      function(curTab) {
 
-      updateInflight = true; // Temporary "consistency model~"
-      // Send request only once, when tab has completely loaded new URL.
-      if (changeInfo.status == CHROME_TAB_LOADED) {
-        counter ++; //Counter gets incremented here because it's certain
-                    //this happens once per update
-        sendRequest("URL_update", params, function(response) {
-          if (response.message == true) {
-            console.log("Server received updated URL.");
-          }
-          else {
-            //TODO: Resend request upon failure?
-            console.log("Server did not receive updated URL.")
-          }
-          updateInflight = false;
-        });
+      // console.log(changeInfo);
+      // console.log("Tab: " + tab.url);
+      // console.log("OldURL: " + oldURL);
+      //console.log("launchedTab: " + launchedTab.toString());
+      if (((changeInfo.url != undefined) || (tab.url != oldURL)) 
+                     && curTab[0].id == launchedTab) {
+        //console.log("CURR TAB: " + curTab[0].id.toString());
+        // Accounts for two ways URL updates are reflected in Chrome.
+        if (changeInfo.url != undefined) {
+          params = ["url=" + changeInfo.url, "counter=" + counter.toString()];
+        }
+        else if (tab.url != oldURL) {
+          params = ["url=" + tab.url, "counter=" + counter.toString()];
+        }
+
+        updateInflight = true; // Temporary "consistency model~"
+        // Send request only once, when tab has completely loaded new URL.
+        if (changeInfo.status == CHROME_TAB_LOADED) {
+          counter ++; //Counter gets incremented here because it's certain
+                      //this happens once per update
+          sendRequest("URL_update", params, function(response) {
+            if (response.message == true) {
+              console.log("Server received updated URL.");
+            }
+            else {
+              //TODO: Resend request upon failure?
+              console.log("Server did not receive updated URL.")
+            }
+            updateInflight = false;
+          });
+        }
       }
-    }
+    });
   }
 });
 
 
 //TODO: Check user input for valid remote server URL.
-/* initExtension - sets up connection to server, or returns null if cancelled*/
+/* initExtension -
+ * sets up connection to server, or returns null if cancelled
+ * Also sets the launchedTab variable which restricts the extension
+ * to work only on the launchedTab
+ * */
 function initExtension() {
+
+
   var input = window.prompt("Please enter URL of server.", "Server URL");
   if (input == null) {
     return null;
   }
-  serverURL = input
+
+  chrome.tabs.query({'lastFocusedWindow': true, 'active': true}, 
+    function(curTab) {
+      launchedTab = curTab[0].id;
+  });
+
+  serverURL = input;
   return input;
 }
 
@@ -116,8 +134,9 @@ function startExtension() {
         if (updateInflight == false) {
           chrome.tabs.query({'lastFocusedWindow': true, 'active': true}, 
             function(curTab) {
-              if((curTab[0].url != response.curURL)
-                                          && (counter > response.counter)){
+              if((curTab[0].url != response.curURL) && 
+                       (curTab[0].id == launchedTab) && 
+                              (counter > response.counter)){
                 chrome.tabs.update(curTab[0].id, {'url': response.curURL},
                   function(){});
               }
@@ -133,6 +152,7 @@ function startExtension() {
 function stopExtension() {
   clearTimeout(timerId);
   serverURL = undefined;
+  launchedTab = undefined;
 }
 
 /* sendRequest - Sends a GET request to server.
