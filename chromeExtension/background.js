@@ -14,8 +14,7 @@
  * Experiments: 1. Does it even funciton?
  *              2. How quickly can we send pings before it breaks?
  *              3. How much overhead is associated with the ping?
- *              4. 
-*/
+ */
 /*******(」゜ロ゜)」--------------------------------щ(゜ロ゜щ)**************/
 
 
@@ -23,27 +22,26 @@
 var PING_INTERVAL = 3000;
 var CHROME_TAB_LOADED = "complete";
 var extensionOn = false;
-var serverURL = undefined;
 
+var serverURL = undefined; // URL of remote server that forwards updates
 var updateInflight = false; // Replace with better consistency model/algorithm?
-var oldURL = undefined;
-var counter = 0;
-var launchedTab = undefined;
-var ID = undefined;
+var oldURL = undefined; //URL of the last page visited
+var counter = 0; // Increasing counter that tracks if we're ahead of the server
+var launchedTab = undefined; // Tab the extension was launched on
+var ID = undefined; // ID of whether this server is a master or slave
 
 
 // TODO: HTTP Get Security?
-// Later TODO: Initialization - Tell server if master or slave.
-// Currently - Turns extension on and off to periodically ping server.
 chrome.browserAction.onClicked.addListener(function(tab) {
+  //Switches extension on/off
   extensionOn = !(extensionOn);
 
   if (extensionOn) { 
-    var input = initExtension();
+    var inputAddr = initExtension();
 
-    if (input != null) {
+    if (inputAddr != null) {
       console.log("Extension is on");
-      startExtension();
+      runExtension();
     }
     else {
       extensionOn = false;
@@ -64,17 +62,17 @@ chrome.tabs.onReplaced.addListener(function(addedTabId, removedTabId){
   console.log("launchedTab: " + launchedTab.toString());
   console.log("removedTabId: " + removedTabId.toString());
   console.log("addedTabId: " + addedTabId.toString());
+  
   if(removedTabId == launchedTab){
     launchedTab = addedTabId;
   }
 });
 
-// NOTE: Apparently Chrome does not always pick up rapid tab changes
-//       and instead attempts to reload the current URL.
 // Upon visit to new URL, tell server of new URL.
-// TODO: When the URL is forced to change after a ping, this gets called.
 chrome.tabs.onUpdated.addListener(function(tabId, changeInfo, tab) {
   console.log("ID: " + ID);
+  // Only send an update if the extension is on, we're a master, and we're on
+  // the launched tab
   if (extensionOn && (ID=="m")) {
     chrome.tabs.query({'lastFocusedWindow': true, 'active': true}, 
       function(curTab) {
@@ -95,7 +93,7 @@ chrome.tabs.onUpdated.addListener(function(tabId, changeInfo, tab) {
           params = ["url=" + tab.url, "counter=" + counter.toString()];
         }
 
-        updateInflight = true; // Temporary "consistency model~"
+        updateInflight = true; 
         // Send request only once, when tab has completely loaded new URL.
         if (changeInfo.status == CHROME_TAB_LOADED) {
           counter ++; //Counter gets incremented here because it's certain
@@ -145,31 +143,41 @@ function initExtension() {
   return input;
 }
 
-
-// Later TODO: Affect only a unique tab instead of 'active' tabs?
-// TODO: Account for inputted server URL.
+/* startExtension
+ *
+ * Main body of extension that executes pings to the server and updates
+ * the local tab's URL.
+ *
+ * While the extension is on, it calls itself recursively asynchronously using
+ * setTimeout()
+ */
 function startExtension() {
   sendRequest("ping", ["sender=masterClient"], function(response) {
         console.log("Server URL: " + response.curURL);
         if (updateInflight == false) {
           chrome.tabs.query({'lastFocusedWindow': true, 'active': true}, 
             function(curTab) {
+              // Three conditions: 1. prevent unnecessary reloading
+              //                   2. Are we in the correct tab?
+              //                   3. Are we ahead of the update?
               if((curTab[0].url != response.curURL) && 
                        (curTab[0].id == launchedTab) && 
                               (counter < response.counter)){
                 chrome.tabs.update(curTab[0].id, {'url': response.curURL},
                   function(){});
+
+                // We've caught up to the server, so set the counter to match
+                // the server
                 counter = response.counter;
               }
               oldURL = response.curURL;
             });
         }
   });
-  // TODO: Can we change this to setInterval()?
   timerId = window.setTimeout(startExtension, PING_INTERVAL);
 }
 
-
+// Clear out all of the stored globals
 function stopExtension() {
   clearTimeout(timerId);
   serverURL = undefined;
@@ -177,7 +185,7 @@ function stopExtension() {
   ID = undefined;
 }
 
-/* sendRequest - Sends a GET request to server.
+/* sendRequest - Sends a POST (GET?) request to server.
  * @param:
  *   action - A string representing the action server needs to respond to.
  *   params - List of strings to be added to GET request URL.
@@ -193,8 +201,6 @@ function sendRequest(action, params, callback) {
         }
     };
     xhr.open("POST", url, true);
-    //xhr.open("POST", "http://127.0.0.1:8880/ping?sender=masterClient", true);
-    //xhr.setRequestHeader(); 
     xhr.send();
 }
 
