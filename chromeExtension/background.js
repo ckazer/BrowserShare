@@ -143,7 +143,7 @@ function initExtension() {
   return input;
 }
 
-/* startExtension
+/* runExtension
  *
  * Main body of extension that executes pings to the server and updates
  * the local tab's URL.
@@ -151,7 +151,7 @@ function initExtension() {
  * While the extension is on, it calls itself recursively asynchronously using
  * setTimeout()
  */
-function startExtension() {
+function runExtension() {
   sendRequest("ping", ["sender=masterClient"], function(response) {
         console.log("Server URL: " + response.curURL);
         if (updateInflight == false) {
@@ -174,7 +174,7 @@ function startExtension() {
             });
         }
   });
-  timerId = window.setTimeout(startExtension, PING_INTERVAL);
+  timerId = window.setTimeout(runExtension, PING_INTERVAL);
 }
 
 // Clear out all of the stored globals
