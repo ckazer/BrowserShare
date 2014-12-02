@@ -70,7 +70,8 @@ chrome.tabs.onReplaced.addListener(function(addedTabId, removedTabId){
 
 // Upon visit to new URL, tell server of new URL.
 chrome.tabs.onUpdated.addListener(function(tabId, changeInfo, tab) {
-  console.log("ID: " + ID);
+  //console.log("ID: " + ID);
+  //console.log("launchedTab: " + launchedTab);
   // Only send an update if the extension is on, we're a master, and we're on
   // the launched tab
   if (extensionOn && (ID=="m")) {
@@ -87,16 +88,18 @@ chrome.tabs.onUpdated.addListener(function(tabId, changeInfo, tab) {
                      && curTab[0].id == launchedTab) {
         // Accounts for two ways URL updates are reflected in Chrome.
         if (changeInfo.url != undefined) {
+          counter ++;
           params = ["url=" + changeInfo.url, "counter=" + counter.toString()];
         }
         else if (tab.url != oldURL) {
+          counter ++;
           params = ["url=" + tab.url, "counter=" + counter.toString()];
         }
 
         updateInflight = true; 
         // Send request only once, when tab has completely loaded new URL.
         if (changeInfo.status == CHROME_TAB_LOADED) {
-          counter ++; //Counter gets incremented here because it's certain
+          //counter ++; //Counter gets incremented here because it's certain
                       //this happens once per update
           sendRequest("URL_update", params, function(response) {
             if (response.message == true) {
@@ -162,7 +165,7 @@ function runExtension() {
               //                   3. Are we ahead of the update?
               if((curTab[0].url != response.curURL) && 
                        (curTab[0].id == launchedTab) && 
-                              (counter < response.counter)){
+                              (counter <= response.counter)){
                 chrome.tabs.update(curTab[0].id, {'url': response.curURL},
                   function(){});
 

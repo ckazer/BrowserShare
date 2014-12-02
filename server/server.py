@@ -4,7 +4,7 @@ from twisted.internet import reactor
 import json
 import urllib
 
-masterInfo = {"curURL": "http://cs.swarthmore.edu", "count": -1}
+masterInfo = {"curURL": "http://cs.swarthmore.edu", "counter": -1}
 
 class Ping(Resource):
      isLeaf = True
@@ -36,10 +36,10 @@ class URL_Update(Resource):
          #tokens[0] is url=... tokens[1] is counter=...
 
          masterInfo["curURL"] = tokens[0][4:] #first four chars are 'url='
-         masterInfo["count"] = tokens[1].split('=')[1]
+         masterInfo["counter"] = int(tokens[1].split('=')[1])
 
          print "masterURL: " + masterInfo["curURL"]
-         print "masterCount: " + masterInfo["count"]
+         print "masterCount: " + str(masterInfo["counter"])
 
          return '{ "message": true }'
 
