@@ -1,13 +1,13 @@
 /*******(╯°□°）╯︵ ┻━┻-----------TODO-----------┬──┬◡ﾉ(° -°ﾉ)***************/
 /*
- * Functionality: 1. Connect to EC2
+ * Functionality: 1. Connect to EC2 -- DONE
  *                2. Add increasing integer to track current page -- DONE
- *                3. Is there a way to handle repeated, quick navigations?
+ *                3. Is there a way to handle repeated, quick navigations? DONE
  *                4. Research/add highlighting
  *                5. Write content script for highlighting
  *
  * Follow-up/polishing: 1. Robust code for initially connecting to server
- *                      2. Master/slave mode
+ *                      2. Master/slave mode -- DONE
  *                      3. Set text from text box
  *                      4. Democratic vote mode?
  *
@@ -27,7 +27,7 @@ var MASTER_ID = "m";
 var extensionOn = false;
 
 var serverURL = undefined; // URL of remote server that forwards updates
-var updateInflight = false; // Replace with better consistency model/algorithm?
+var updateInflight = false; // Keeps track if a message is already in flight
 var oldURL = undefined; //URL of the last page visited
 var counter = 0; // Increasing counter that tracks if we're ahead of the server
 var launchedTab = undefined; // Tab the extension was launched on
@@ -37,6 +37,8 @@ var ID = undefined; // ID of whether this server is a master or slave
 chrome.browserAction.onClicked.addListener(function(tab) {
   //Switches extension on/off
   extensionOn = !(extensionOn);
+
+  //chrome.tabs.executeScript(null, {file: "content_script.js"});
 
   if (extensionOn) { 
     var inputAddr = initExtension();
@@ -161,7 +163,7 @@ function initExtension() {
  * Main body of extension that executes pings to the server and updates
  * the local tab's URL.
  *
- * While the extension is on, it calls itself recursively asynchronously using
+ * While the extension is on, it calls itself recursively, asynchronously using
  * setTimeout()
  */
 function runExtension() {

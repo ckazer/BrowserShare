@@ -8,6 +8,11 @@
   "background": {
     "scripts": ["background.js"]
   },
+  "content_scripts":[{
+        "js": ["content_scripts.js"],
+        "matches": ["http://*/*", "https://*/*"]
+  }],
+  "web_accessible_resources": ["script.js"],
   "browser_action": {
     "default_title": "Initialize Browser Sharing"
   },
