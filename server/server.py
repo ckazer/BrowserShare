@@ -37,12 +37,16 @@ class URL_Update(Resource):
 
          masterInfo["curURL"] = tokens[0][4:] #first four chars are 'url='
          masterInfo["counter"] = int(tokens[1].split('=')[1])
+		 #TODO: Reset client counters on turn-off. Server increments and overflows.
+		 #masterInfo["counter"] += 1
+         
 
          print "masterURL: " + masterInfo["curURL"]
          print "masterCount: " + str(masterInfo["counter"])
 
          return '{ "message": true }'
 
+# TODO: Clean up Client communication. Depends if we choose HTTP Get or Post.
 def assembleTokens(request):
 
     tokens = request.uri.split('?')[1] #separate server url from query

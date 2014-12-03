@@ -14,13 +14,16 @@
  * Experiments: 1. Does it even funciton?
  *              2. How quickly can we send pings before it breaks?
  *              3. How much overhead is associated with the ping?
+ * Future Goals:
+ *              1. Multiple 'master' client management
  */
 /*******(」゜ロ゜)」--------------------------------щ(゜ロ゜щ)**************/
 
-
+// TODO: Case to handle - Start extension in one tab and close in another.
 
 var PING_INTERVAL = 3000;
 var CHROME_TAB_LOADED = "complete";
+var MASTER_ID = "m";
 var extensionOn = false;
 
 var serverURL = undefined; // URL of remote server that forwards updates
@@ -31,7 +34,6 @@ var launchedTab = undefined; // Tab the extension was launched on
 var ID = undefined; // ID of whether this server is a master or slave
 
 
-// TODO: HTTP Get Security?
 chrome.browserAction.onClicked.addListener(function(tab) {
   //Switches extension on/off
   extensionOn = !(extensionOn);
@@ -55,58 +57,66 @@ chrome.browserAction.onClicked.addListener(function(tab) {
 
 });
 
-// Attempts to catch when preloading changes the ID of a tab, and updates
-// launchedTab
+// TODO: FIX? - Sometimes URL updates to server are not sent and 
+//              tripping occurs when this is evoked.
+/* Attempts to catch when Chrome prerendering changes the ID of a tab, 
+ * and updates launchedTab.
+ */
 chrome.tabs.onReplaced.addListener(function(addedTabId, removedTabId){
-  console.log("TAB WAS REPLACED");
-  console.log("launchedTab: " + launchedTab.toString());
-  console.log("removedTabId: " + removedTabId.toString());
-  console.log("addedTabId: " + addedTabId.toString());
+  // console.log("TAB WAS REPLACED");
+  // console.log("launchedTab: " + launchedTab.toString());
+  // console.log("removedTabId: " + removedTabId.toString());
+  // console.log("addedTabId: " + addedTabId.toString());
   
   if(removedTabId == launchedTab){
     launchedTab = addedTabId;
   }
 });
 
+// TODO: FIX - Event fires when a new tab is created.
+// TODO: FIX - Tab still sometimes trips when tab is changed using Chrome
+//             bookmarks but before update is fired.
 // Upon visit to new URL, tell server of new URL.
 chrome.tabs.onUpdated.addListener(function(tabId, changeInfo, tab) {
   //console.log("ID: " + ID);
   //console.log("launchedTab: " + launchedTab);
+  
   // Only send an update if the extension is on, we're a master, and we're on
   // the launched tab
-  if (extensionOn && (ID=="m")) {
+  if (extensionOn && (ID == MASTER_ID)) {
     chrome.tabs.query({'lastFocusedWindow': true, 'active': true}, 
       function(curTab) {
 
       // console.log(changeInfo);
       // console.log("Tab: " + tab.url);
       // console.log("OldURL: " + oldURL);
-      
       // console.log("launchedTab: " + launchedTab.toString());
       // console.log("CURR TAB: " + curTab[0].id.toString());
-      if (((changeInfo.url != undefined) || (tab.url != oldURL)) 
-                     && curTab[0].id == launchedTab) {
-        // Accounts for two ways URL updates are reflected in Chrome.
-        if (changeInfo.url != undefined) {
-          counter ++;
-          params = ["url=" + changeInfo.url, "counter=" + counter.toString()];
-        }
-        else if (tab.url != oldURL) {
-          counter ++;
-          params = ["url=" + tab.url, "counter=" + counter.toString()];
-        }
 
+      // Check for URL changes in current tab.
+      if ((curTab[0].id == launchedTab && 
+            (changeInfo.url != undefined) || (tab.url != oldURL) )) {
+        
         updateInflight = true; 
         // Send request only once, when tab has completely loaded new URL.
         if (changeInfo.status == CHROME_TAB_LOADED) {
-          //counter ++; //Counter gets incremented here because it's certain
-                      //this happens once per update
+
+          // Accounts for two ways URL updates are reflected in Chrome.
+          if (changeInfo.url != undefined) {
+            counter++;
+            params = ["url=" + changeInfo.url, "counter=" + counter.toString()];
+          }
+          else if (tab.url != oldURL) {
+            counter++;
+            params = ["url=" + tab.url, "counter=" + counter.toString()];
+          }
+
           sendRequest("URL_update", params, function(response) {
             if (response.message == true) {
               console.log("Server received updated URL.");
             }
             else {
-              //TODO: Resend request upon failure?
+              //TODO: IMPLEMENT - Resend request upon failure?
               console.log("Server did not receive updated URL.")
             }
             updateInflight = false;
@@ -129,7 +139,6 @@ chrome.tabs.onUpdated.addListener(function(tabId, changeInfo, tab) {
  * */
 function initExtension() {
 
-
   var input = window.prompt("Please enter URL of server.", "Server URL");
   if (input == null) {
     return null;
@@ -140,8 +149,9 @@ function initExtension() {
       launchedTab = curTab[0].id;
   });
 
-  ID = window.prompt("Are you participating as a master(m) or slave(s)?");
+  ID = window.prompt("Are you participating as a master (m) or slave (s)?");
 
+  //TODO: Refactor - Is 'input' variable necessary?
   serverURL = input;
   return input;
 }
@@ -186,8 +196,12 @@ function stopExtension() {
   serverURL = undefined;
   launchedTab = undefined;
   ID = undefined;
+  // TODO: Reset client counters on turn-off. Server increments and overflows. 
+  //      And if server counter has overflowed, then notify to reset extension?
+  // counter = 0;
 }
 
+// TODO: HTTP Get or Http Post?
 /* sendRequest - Sends a POST (GET?) request to server.
  * @param:
  *   action - A string representing the action server needs to respond to.
