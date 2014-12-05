@@ -30,7 +30,7 @@ var oldURL = undefined; //URL of the last page visited
 var counter = 0; // Increasing counter that tracks if we're ahead of the server
 var launchedTab = undefined; // Tab the extension was launched on
 var ID = undefined; // ID of whether this server is a master or slave
-var ourHL = undefined // String of text locally highlighted
+var ourHL = "ERROR_NO_SELECTION" // String of text locally highlighted
 var serverHL = undefined // String of text server has highlighted
 
 
@@ -187,7 +187,7 @@ function runExtension() {
   
   chrome.tabs.query({'lastFocusedWindow': true, 'active': true}, 
       function(curTab){
-      if (curTab[0].id == launchedTab){
+      if ((curTab[0].id == launchedTab) && (ID == MASTER_ID)){
         retrieveHighlighted();
       }
   });
@@ -232,7 +232,7 @@ function stopExtension() {
   serverURL = undefined;
   launchedTab = undefined;
   ID = undefined;
-  ourHL = undefined;
+  ourHL = "ERROR_NO_SELECTION";
   serverHL = undefined;
   // TODO: Reset client counters on turn-off. Server increments and overflows. 
   //      And if server counter has overflowed, then notify to reset extension?
@@ -279,5 +279,17 @@ function createURL(action, params) {
   return url;
 }
 
+//This API creates a new option in the right click menu titled "Selected Text"
+//It appears in all contexts and runs the function displaySelectedText
+chrome.contextMenus.create({'title': 'Selected Text',
+                            'contexts': ["all"],
+                            'onclick': displaySelectedText}, 
+    function(){
+//Do Nothing
+return null;
+});
 
-
+//Creates and alert window that displays the selected text
+function displaySelectedText(){
+  window.alert("Selected Text:\n" + serverHL);
+};

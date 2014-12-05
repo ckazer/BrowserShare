@@ -19,9 +19,13 @@ class Ping(Resource):
          
          global masterInfo
          tokens = assembleTokens(request)
-         
+        
+
          #This is messy, but it works. Try to clean up later?
-         masterInfo["hl"] = tokens[0][3:] #first 3 chars are 'hl='
+         newHL = tokens[0][3:] #first 3 chars are 'hl='
+
+         if newHL != "ERROR_NO_SELECTION":
+             masterInfo["hl"] = newHL
 
          return json.dumps(masterInfo)
 
@@ -39,7 +43,7 @@ class URL_Update(Resource):
 
          #This is messy, but it works. Try to clean up later?
          #tokens[0] is url=... tokens[1] is counter=...
-
+         
          masterInfo["curURL"] = tokens[0][4:] #first four chars are 'url='
          masterInfo["counter"] = int(tokens[1].split('=')[1])
 		 #TODO: Reset client counters on turn-off. Server increments and overflows.
