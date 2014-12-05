@@ -19,13 +19,13 @@
  */
 /*******(」゜ロ゜)」--------------------------------щ(゜ロ゜щ)**************/
 
-var PING_INTERVAL = 5000;
-var CHROME_TAB_LOADED = "complete";
+var PING_INTERVAL = 3000;
+// var CHROME_TAB_LOADED = "complete";
 var MASTER_ID = "m";
 var extensionOn = false;
 
 var serverURL = undefined; // URL of remote server that forwards updates
-//var updateInflight = false; // Keeps track if a message is already in flight
+var updateInflight = false; // Keeps track if a message is already in flight
 var oldURL = undefined; //URL of the last page visited
 var counter = 0; // Increasing counter that tracks if we're ahead of the server
 var launchedTab = undefined; // Tab the extension was launched on
@@ -73,9 +73,6 @@ chrome.tabs.onReplaced.addListener(function(addedTabId, removedTabId){
   }
 });
 
-// TODO: FIX - Event fires when a new tab is created.
-// TODO: FIX - Tab still sometimes trips when tab is changed using Chrome
-//             bookmarks but before update is fired.
 // Upon visit to new URL, tell server of new URL.
 chrome.tabs.onUpdated.addListener(function(tabId, changeInfo, tab) {
   //console.log("ID: " + ID);
@@ -83,6 +80,7 @@ chrome.tabs.onUpdated.addListener(function(tabId, changeInfo, tab) {
   
   // Only send an update if the extension is on, we're a master, and we're on
   // the launched tab
+  updateInflight = true; 
   if (extensionOn && (ID == MASTER_ID)) {
     chrome.tabs.query({'lastFocusedWindow': true, 'active': true}, 
       function(curTab) {
@@ -98,8 +96,8 @@ chrome.tabs.onUpdated.addListener(function(tabId, changeInfo, tab) {
             (changeInfo.url != undefined || tab.url != oldURL) ) {
         
         //updateInflight = true; 
-        // Send request only once, when tab has completely loaded new URL.
-        if (changeInfo.status == CHROME_TAB_LOADED) {
+        //**Antiquated** Send request only once, when tab has completely loaded new URL.
+        //if (changeInfo.status == CHROME_TAB_LOADED) {
 
           // Accounts for two ways URL updates are reflected in Chrome.
           if (changeInfo.url != undefined) {
@@ -112,7 +110,7 @@ chrome.tabs.onUpdated.addListener(function(tabId, changeInfo, tab) {
           }
 
           sendRequest("URL_update", params, function(response) {
-            if (response.message == true) {
+            if (response.success == true) {
               console.log("Server received updated URL.");
             }
             else {
@@ -121,10 +119,11 @@ chrome.tabs.onUpdated.addListener(function(tabId, changeInfo, tab) {
             }
             //updateInflight = false;
           });
-        }
+        //}
       }
     });
   }
+  updateInflight = false;
 });
 
 
@@ -166,34 +165,35 @@ function initExtension() {
  * setTimeout()
  */
 function runExtension() {
-  sendRequest("ping", ["sender=masterClient"], function(response) {
-        console.log("Server URL: " + response.curURL);
-        //console.log("Update in flight: " + updateInflight);
-        //if (updateInflight == false) {
-          chrome.tabs.query({'lastFocusedWindow': true, 'active': true}, 
-            function(curTab) {
-              console.log("Current URL: " + curTab[0].url);
-              console.log("Current tab: " + curTab[0].id);
-              console.log("Launched tab: " + launchedTab);
-              console.log("Counter: " + counter);
-              console.log("Server's Counter: " + response.counter);
-              // Three conditions: 1. prevent unnecessary reloading
-              //                   2. Are we in the correct tab?
-              //                   3. Are we ahead of the update?
-              if((curTab[0].url != response.curURL) && 
-                       (curTab[0].id == launchedTab) && 
-                              (counter <= response.counter)){
-                chrome.tabs.update(curTab[0].id, {'url': response.curURL},
-                  function(){});
+  if (updateInflight == false) {
+    sendRequest("ping", ["sender=masterClient"], function(response) {
+      console.log("Server URL: " + response.curURL);
+      if (updateInflight == false) {
+        chrome.tabs.query({'lastFocusedWindow': true, 'active': true}, 
+          function(curTab) {
+            console.log("Current URL: " + curTab[0].url);
+            console.log("Current tab: " + curTab[0].id);
+            console.log("Launched tab: " + launchedTab);
+            console.log("Counter: " + counter);
+            console.log("Server's Counter: " + response.counter);
+            // Three conditions: 1. prevent unnecessary reloading
+            //                   2. Are we in the correct tab?
+            //                   3. Are we ahead of the update?
+            if((curTab[0].url != response.curURL) && 
+                     (curTab[0].id == launchedTab) && 
+                            (counter <= response.counter)){
+              chrome.tabs.update(curTab[0].id, {'url': response.curURL},
+                function(){});
 
-                // We've caught up to the server, so set the counter to match
-                // the server
-                counter = response.counter;
-              }
-              oldURL = response.curURL;
-            });
-        //}
-  });
+              // We've caught up to the server, so set the counter to match
+              // the server
+              counter = response.counter;
+            }
+            oldURL = response.curURL;
+          });
+      }
+    });
+  }
   timerId = window.setTimeout(runExtension, PING_INTERVAL);
 }
 
