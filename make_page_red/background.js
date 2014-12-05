@@ -13,6 +13,6 @@ function doNothing() {
   return null;
 };
 
-chrome.runtime.onMessage.addListener(function(message, sender, doNothing()){
+chrome.runtime.onMessage.addListener(function(message, sender/*, doNothing()*/){
         console.log(message);
 });
