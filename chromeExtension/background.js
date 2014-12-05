@@ -8,18 +8,16 @@
  *
  * Follow-up/polishing: 1. Robust code for initially connecting to server
  *                      2. Master/slave mode -- DONE
- *                      3. Set text from text box
- *                      4. Democratic vote mode?
  *
  * Experiments: 1. Does it even funciton?
  *              2. How quickly can we send pings before it breaks?
  *              3. How much overhead is associated with the ping?
  * Future Goals:
  *              1. Multiple 'master' client management
+ *              2. Democratic vote mode
+ *              3. Set text in an HTML text box
  */
 /*******(」゜ロ゜)」--------------------------------щ(゜ロ゜щ)**************/
-
-// TODO: Case to handle - Start extension in one tab and close in another.
 
 var PING_INTERVAL = 5000;
 var CHROME_TAB_LOADED = "complete";
@@ -96,8 +94,8 @@ chrome.tabs.onUpdated.addListener(function(tabId, changeInfo, tab) {
       // console.log("CURR TAB: " + curTab[0].id.toString());
 
       // Check for URL changes in current tab.
-      if ((curTab[0].id == launchedTab && 
-            (changeInfo.url != undefined) || (tab.url != oldURL) )) {
+      if (curTab[0].id == launchedTab && 
+            (changeInfo.url != undefined || tab.url != oldURL) ) {
         
         //updateInflight = true; 
         // Send request only once, when tab has completely loaded new URL.
