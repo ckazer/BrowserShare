@@ -45,7 +45,8 @@ chrome.browserAction.onClicked.addListener(function(tab) {
 
     if (inputAddr != null) {
       console.log("Extension is on");
-      runExtension();
+      //retrieveHighlighted();
+      runExtension("NONE");
     }
     else {
       extensionOn = false;
@@ -79,7 +80,7 @@ chrome.tabs.onReplaced.addListener(function(addedTabId, removedTabId){
 // TODO: FIX - Tab still sometimes trips when tab is changed using Chrome
 //             bookmarks but before update is fired.
 // Upon visit to new URL, tell server of new URL.
-/*chrome.tabs.onUpdated.addListener(function(tabId, changeInfo, tab) {
+chrome.tabs.onUpdated.addListener(function(tabId, changeInfo, tab) {
   //console.log("ID: " + ID);
   //console.log("launchedTab: " + launchedTab);
   
@@ -128,7 +129,6 @@ chrome.tabs.onReplaced.addListener(function(addedTabId, removedTabId){
     });
   }
 });
-*/
 
 //TODO: Check user input for valid remote server URL.
 /* initExtension -
@@ -166,11 +166,9 @@ function initExtension() {
  * While the extension is on, it calls itself recursively, asynchronously using
  * setTimeout()
  */
-function runExtension() {
+function runExtension(text) {
 
-  retrieveHighlighted();
-
-  /*sendRequest("ping", ["sender=masterClient"], function(response) {
+  sendRequest("ping", ["sender=masterClient"], function(response) {
         console.log("Server URL: " + response.curURL);
         if (updateInflight == false) {
           chrome.tabs.query({'lastFocusedWindow': true, 'active': true}, 
@@ -191,8 +189,7 @@ function runExtension() {
               oldURL = response.curURL;
             });
         }
-  });*/
-  timerId = window.setTimeout(runExtension, PING_INTERVAL);
+  });
 }
 
 /* retrieveHighlighted
@@ -205,10 +202,13 @@ function runExtension() {
  */
 function retrieveHighlighted(){
   chrome.tabs.executeScript(null, {file: "content_script.js"});
-  chrome.runtime.onMessage.addListener(function(message, sender){
-    console.log(message.text);
+  chrome.runtime.onMessage.addListener(function(message, sender, runExtension){
+    //console.log(message.text);
     //return message.text;
+    runExtension(message.text);
   });
+
+  timerId = window.setTimeout(retrieveHighlighted, PING_INTERVAL);
 }
 
 // Clear out all of the stored globals
