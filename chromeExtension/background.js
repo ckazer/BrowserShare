@@ -79,7 +79,7 @@ chrome.tabs.onReplaced.addListener(function(addedTabId, removedTabId){
 // TODO: FIX - Tab still sometimes trips when tab is changed using Chrome
 //             bookmarks but before update is fired.
 // Upon visit to new URL, tell server of new URL.
-chrome.tabs.onUpdated.addListener(function(tabId, changeInfo, tab) {
+/*chrome.tabs.onUpdated.addListener(function(tabId, changeInfo, tab) {
   //console.log("ID: " + ID);
   //console.log("launchedTab: " + launchedTab);
   
@@ -128,7 +128,7 @@ chrome.tabs.onUpdated.addListener(function(tabId, changeInfo, tab) {
     });
   }
 });
-
+*/
 
 //TODO: Check user input for valid remote server URL.
 /* initExtension -
@@ -167,7 +167,10 @@ function initExtension() {
  * setTimeout()
  */
 function runExtension() {
-  sendRequest("ping", ["sender=masterClient"], function(response) {
+
+  retrieveHighlighted();
+
+  /*sendRequest("ping", ["sender=masterClient"], function(response) {
         console.log("Server URL: " + response.curURL);
         if (updateInflight == false) {
           chrome.tabs.query({'lastFocusedWindow': true, 'active': true}, 
@@ -188,8 +191,24 @@ function runExtension() {
               oldURL = response.curURL;
             });
         }
-  });
+  });*/
   timerId = window.setTimeout(runExtension, PING_INTERVAL);
+}
+
+/* retrieveHighlighted
+ *
+ * Asynchronously runs the content script to retrieve the highlighted text
+ * on the page.
+ *
+ * Returns a string containing the highlighted text on success, or 
+ * "ERROR_NO_SELECTION" on failure.
+ */
+function retrieveHighlighted(){
+  chrome.tabs.executeScript(null, {file: "content_script.js"});
+  chrome.runtime.onMessage.addListener(function(message, sender){
+    console.log(message.text);
+    //return message.text;
+  });
 }
 
 // Clear out all of the stored globals
