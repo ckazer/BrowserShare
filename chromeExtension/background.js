@@ -4,12 +4,12 @@
  *                2. Add increasing integer to track current page -- DONE
  *                3. Is there a way to handle repeated, quick navigations? DONE
  *                4. Research/add highlighting
- *                5. Write content script for highlighting
+ *                5. Write content script for highlighting -- DONE
  *
  * Follow-up/polishing: 1. Robust code for initially connecting to server
  *                      2. Master/slave mode -- DONE
  *
- * Experiments: 1. Does it even funciton?
+ * Experiments: 1. Does it even funciton? -- DONE
  *              2. How quickly can we send pings before it breaks?
  *              3. How much overhead is associated with the ping?
  * Future Goals:
@@ -30,6 +30,8 @@ var oldURL = undefined; //URL of the last page visited
 var counter = 0; // Increasing counter that tracks if we're ahead of the server
 var launchedTab = undefined; // Tab the extension was launched on
 var ID = undefined; // ID of whether this server is a master or slave
+var ourHL = undefined // String of text locally highlighted
+var serverHL = undefined // String of text server has highlighted
 
 
 chrome.browserAction.onClicked.addListener(function(tab) {
@@ -156,6 +158,23 @@ function initExtension() {
 }
 
 // TODO: FIX - URL changes are only reflected if clients alternate changing URL.  
+
+/* retrieveHighlighted
+ *
+ * Asynchronously runs the content script to retrieve the highlighted text
+ * on the page.
+ *
+ * Returns a string containing the highlighted text on success, or 
+ * "ERROR_NO_SELECTION" on failure.
+ */
+function retrieveHighlighted(){
+  chrome.tabs.executeScript(null, {file: "content_script.js"});
+  chrome.runtime.onMessage.addListener(function(message, sender, setHL){
+    ourHL = message.text;
+    console.log("ourHL: " + ourHL);
+  });
+}
+
 /* runExtension
  *
  * Main body of extension that executes pings to the server and updates
@@ -165,8 +184,16 @@ function initExtension() {
  * setTimeout()
  */
 function runExtension() {
+  
+  chrome.tabs.query({'lastFocusedWindow': true, 'active': true}, 
+      function(curTab){
+      if (curTab[0].id == launchedTab){
+        retrieveHighlighted();
+      }
+  });
+
   if (updateInflight == false) {
-    sendRequest("ping", ["sender=masterClient"], function(response) {
+    sendRequest("ping", ["hl="+ourHL], function(response) {
       console.log("Server URL: " + response.curURL);
       if (updateInflight == false) {
         chrome.tabs.query({'lastFocusedWindow': true, 'active': true}, 
@@ -189,6 +216,8 @@ function runExtension() {
               // the server
               counter = response.counter;
             }
+            serverHL = response.hl;
+            console.log("serverHL: " + serverHL);
             oldURL = response.curURL;
           });
       }
@@ -203,6 +232,8 @@ function stopExtension() {
   serverURL = undefined;
   launchedTab = undefined;
   ID = undefined;
+  ourHL = undefined;
+  serverHL = undefined;
   // TODO: Reset client counters on turn-off. Server increments and overflows. 
   //      And if server counter has overflowed, then notify to reset extension?
   // counter = 0;
@@ -248,21 +279,5 @@ function createURL(action, params) {
   return url;
 }
 
-/* retrieveHighlighted
- *
- * Asynchronously runs the content script to retrieve the highlighted text
- * on the page.
- *
- * Returns a string containing the highlighted text on success, or 
- * "ERROR_NO_SELECTION" on failure.
- */
-function retrieveHighlighted(){
-  chrome.tabs.executeScript(null, {file: "content_script.js"});
-  chrome.runtime.onMessage.addListener(function(message, sender, runExtension){
-    //console.log(message.text);
-    //runExtension(message.text);
-  });
 
-  //timerId = window.setTimeout(retrieveHighlighted, PING_INTERVAL);
-}
 

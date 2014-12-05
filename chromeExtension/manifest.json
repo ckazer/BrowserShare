@@ -3,7 +3,7 @@
   "description": "Extension that allows users to share a browser.",
   "version": "1.0",
   "permissions": [
-    "activeTab", "tabs", "http://*/", "https://*/"
+    "activeTab", "tabs", "http://*/", "https://*/", "contextMenus"
   ],
   "background": {
     "scripts": ["background.js"]

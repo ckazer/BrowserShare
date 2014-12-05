@@ -4,7 +4,8 @@ from twisted.internet import reactor
 import json
 import urllib
 
-masterInfo = {"curURL": "http://cs.swarthmore.edu", "counter": -1}
+masterInfo = {"curURL": "http://cs.swarthmore.edu", "counter": -1, 
+                            "hl": "ERROR_NO_SELECTION"}
 
 class Ping(Resource):
      isLeaf = True
@@ -14,10 +15,14 @@ class Ping(Resource):
 
          request.setHeader('Access-Control-Allow-Origin', '*')
          #request.setHeader('Access-Control-Allow-Methods', 'POST')
-         #request.setHeader('Access-Control-Allow-Origin', '*')
          #request.setHeader('Access-Control-Max-Age', 120)
          
          global masterInfo
+         tokens = assembleTokens(request)
+         
+         #This is messy, but it works. Try to clean up later?
+         masterInfo["hl"] = tokens[0][3:] #first 3 chars are 'hl='
+
          return json.dumps(masterInfo)
 
 # TODO: Add server logic for URL reception.
