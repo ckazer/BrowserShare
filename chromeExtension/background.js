@@ -8,21 +8,19 @@
  *
  * Follow-up/polishing: 1. Robust code for initially connecting to server
  *                      2. Master/slave mode -- DONE
- *                      3. Set text from text box
- *                      4. Democratic vote mode?
  *
  * Experiments: 1. Does it even funciton?
  *              2. How quickly can we send pings before it breaks?
  *              3. How much overhead is associated with the ping?
  * Future Goals:
  *              1. Multiple 'master' client management
+ *              2. Democratic vote mode
+ *              3. Set text in an HTML text box
  */
 /*******(」゜ロ゜)」--------------------------------щ(゜ロ゜щ)**************/
 
-// TODO: Case to handle - Start extension in one tab and close in another.
-
 var PING_INTERVAL = 3000;
-var CHROME_TAB_LOADED = "complete";
+// var CHROME_TAB_LOADED = "complete";
 var MASTER_ID = "m";
 var extensionOn = false;
 
@@ -45,8 +43,7 @@ chrome.browserAction.onClicked.addListener(function(tab) {
 
     if (inputAddr != null) {
       console.log("Extension is on");
-      //retrieveHighlighted();
-      runExtension("NONE");
+      runExtension();
     }
     else {
       extensionOn = false;
@@ -76,9 +73,6 @@ chrome.tabs.onReplaced.addListener(function(addedTabId, removedTabId){
   }
 });
 
-// TODO: FIX - Event fires when a new tab is created.
-// TODO: FIX - Tab still sometimes trips when tab is changed using Chrome
-//             bookmarks but before update is fired.
 // Upon visit to new URL, tell server of new URL.
 chrome.tabs.onUpdated.addListener(function(tabId, changeInfo, tab) {
   //console.log("ID: " + ID);
@@ -86,6 +80,7 @@ chrome.tabs.onUpdated.addListener(function(tabId, changeInfo, tab) {
   
   // Only send an update if the extension is on, we're a master, and we're on
   // the launched tab
+  updateInflight = true; 
   if (extensionOn && (ID == MASTER_ID)) {
     chrome.tabs.query({'lastFocusedWindow': true, 'active': true}, 
       function(curTab) {
@@ -97,12 +92,12 @@ chrome.tabs.onUpdated.addListener(function(tabId, changeInfo, tab) {
       // console.log("CURR TAB: " + curTab[0].id.toString());
 
       // Check for URL changes in current tab.
-      if ((curTab[0].id == launchedTab && 
-            (changeInfo.url != undefined) || (tab.url != oldURL) )) {
+      if (curTab[0].id == launchedTab && 
+            (changeInfo.url != undefined || tab.url != oldURL) ) {
         
-        updateInflight = true; 
-        // Send request only once, when tab has completely loaded new URL.
-        if (changeInfo.status == CHROME_TAB_LOADED) {
+        //updateInflight = true; 
+        //**Antiquated** Send request only once, when tab has completely loaded new URL.
+        //if (changeInfo.status == CHROME_TAB_LOADED) {
 
           // Accounts for two ways URL updates are reflected in Chrome.
           if (changeInfo.url != undefined) {
@@ -115,20 +110,22 @@ chrome.tabs.onUpdated.addListener(function(tabId, changeInfo, tab) {
           }
 
           sendRequest("URL_update", params, function(response) {
-            if (response.message == true) {
+            if (response.success == true) {
               console.log("Server received updated URL.");
             }
             else {
               //TODO: IMPLEMENT - Resend request upon failure?
               console.log("Server did not receive updated URL.")
             }
-            updateInflight = false;
+            //updateInflight = false;
           });
-        }
+        //}
       }
     });
   }
+  updateInflight = false;
 });
+
 
 //TODO: Check user input for valid remote server URL.
 /* initExtension -
@@ -158,6 +155,7 @@ function initExtension() {
   return input;
 }
 
+// TODO: FIX - URL changes are only reflected if clients alternate changing URL.  
 /* runExtension
  *
  * Main body of extension that executes pings to the server and updates
@@ -166,49 +164,37 @@ function initExtension() {
  * While the extension is on, it calls itself recursively, asynchronously using
  * setTimeout()
  */
-function runExtension(text) {
+function runExtension() {
+  if (updateInflight == false) {
+    sendRequest("ping", ["sender=masterClient"], function(response) {
+      console.log("Server URL: " + response.curURL);
+      if (updateInflight == false) {
+        chrome.tabs.query({'lastFocusedWindow': true, 'active': true}, 
+          function(curTab) {
+            console.log("Current URL: " + curTab[0].url);
+            console.log("Current tab: " + curTab[0].id);
+            console.log("Launched tab: " + launchedTab);
+            console.log("Counter: " + counter);
+            console.log("Server's Counter: " + response.counter);
+            // Three conditions: 1. prevent unnecessary reloading
+            //                   2. Are we in the correct tab?
+            //                   3. Are we ahead of the update?
+            if((curTab[0].url != response.curURL) && 
+                     (curTab[0].id == launchedTab) && 
+                            (counter <= response.counter)){
+              chrome.tabs.update(curTab[0].id, {'url': response.curURL},
+                function(){});
 
-  sendRequest("ping", ["sender=masterClient"], function(response) {
-        console.log("Server URL: " + response.curURL);
-        if (updateInflight == false) {
-          chrome.tabs.query({'lastFocusedWindow': true, 'active': true}, 
-            function(curTab) {
-              // Three conditions: 1. prevent unnecessary reloading
-              //                   2. Are we in the correct tab?
-              //                   3. Are we ahead of the update?
-              if((curTab[0].url != response.curURL) && 
-                       (curTab[0].id == launchedTab) && 
-                              (counter <= response.counter)){
-                chrome.tabs.update(curTab[0].id, {'url': response.curURL},
-                  function(){});
-
-                // We've caught up to the server, so set the counter to match
-                // the server
-                counter = response.counter;
-              }
-              oldURL = response.curURL;
-            });
-        }
-  });
-}
-
-/* retrieveHighlighted
- *
- * Asynchronously runs the content script to retrieve the highlighted text
- * on the page.
- *
- * Returns a string containing the highlighted text on success, or 
- * "ERROR_NO_SELECTION" on failure.
- */
-function retrieveHighlighted(){
-  chrome.tabs.executeScript(null, {file: "content_script.js"});
-  chrome.runtime.onMessage.addListener(function(message, sender, runExtension){
-    //console.log(message.text);
-    //return message.text;
-    runExtension(message.text);
-  });
-
-  timerId = window.setTimeout(retrieveHighlighted, PING_INTERVAL);
+              // We've caught up to the server, so set the counter to match
+              // the server
+              counter = response.counter;
+            }
+            oldURL = response.curURL;
+          });
+      }
+    });
+  }
+  timerId = window.setTimeout(runExtension, PING_INTERVAL);
 }
 
 // Clear out all of the stored globals
@@ -261,3 +247,22 @@ function createURL(action, params) {
   }
   return url;
 }
+
+/* retrieveHighlighted
+ *
+ * Asynchronously runs the content script to retrieve the highlighted text
+ * on the page.
+ *
+ * Returns a string containing the highlighted text on success, or 
+ * "ERROR_NO_SELECTION" on failure.
+ */
+function retrieveHighlighted(){
+  chrome.tabs.executeScript(null, {file: "content_script.js"});
+  chrome.runtime.onMessage.addListener(function(message, sender, runExtension){
+    //console.log(message.text);
+    //runExtension(message.text);
+  });
+
+  //timerId = window.setTimeout(retrieveHighlighted, PING_INTERVAL);
+}
+
