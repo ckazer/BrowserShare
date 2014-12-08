@@ -45,7 +45,7 @@ class URL_Update(Resource):
          #tokens[0] is url=... tokens[1] is counter=...
          
          masterInfo["curURL"] = tokens[0][4:] #first four chars are 'url='
-         if masterInfo[] < int(tokens[1].split('=')[1]):
+         if masterInfo["counter"] < int(tokens[1].split('=')[1]):
                 masterInfo["counter"] = int(tokens[1].split('=')[1])
          
 
