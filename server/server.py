@@ -45,9 +45,8 @@ class URL_Update(Resource):
          #tokens[0] is url=... tokens[1] is counter=...
          
          masterInfo["curURL"] = tokens[0][4:] #first four chars are 'url='
-         masterInfo["counter"] = int(tokens[1].split('=')[1])
-		 #TODO: Reset client counters on turn-off. Server increments and overflows.
-		 #masterInfo["counter"] += 1
+         if masterInfo[] < int(tokens[1].split('=')[1]):
+                masterInfo["counter"] = int(tokens[1].split('=')[1])
          
 
          print "masterURL: " + masterInfo["curURL"]
