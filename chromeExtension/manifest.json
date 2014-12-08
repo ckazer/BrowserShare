@@ -6,7 +6,8 @@
     "activeTab", "tabs", "http://*/"
   ],
   "background": {
-    "scripts": ["background.js"]
+   "scripts": ["background.js"]
+   //"scripts": ["test1.js"]
   },
   
   //"content_scripts":[{

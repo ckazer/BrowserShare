@@ -16,7 +16,7 @@ class Ping(Resource):
          #request.setHeader('Access-Control-Allow-Methods', 'POST')
          #request.setHeader('Access-Control-Allow-Origin', '*')
          #request.setHeader('Access-Control-Max-Age', 120)
-         
+
          global masterInfo
          return json.dumps(masterInfo)
 
@@ -25,7 +25,7 @@ class URL_Update(Resource):
      isLeaf = True
 
      def render_POST(self, request):
-         print 'Request is:', request
+         print 'Request is:', requesty
 
          request.setHeader('Access-Control-Allow-Origin', '*')
 
@@ -36,10 +36,9 @@ class URL_Update(Resource):
          #tokens[0] is url=... tokens[1] is counter=...
 
          masterInfo["curURL"] = tokens[0][4:] #first four chars are 'url='
-         masterInfo["counter"] = int(tokens[1].split('=')[1])
-		 #TODO: Reset client counters on turn-off. Server increments and overflows.
-		 #masterInfo["counter"] += 1
-         
+         if masterInfo["counter"] < int(tokens[1].split('=')[1]):
+                #masterInfo["curURL"] = tokens[0][4:]
+ masterInfo["counter"] = int(tokens[1].split('=')[1])
 
          print "masterURL: " + masterInfo["curURL"]
          print "masterCount: " + str(masterInfo["counter"])
