@@ -41,7 +41,7 @@ chrome.browserAction.onClicked.addListener(function(tab) {
 
   if(extensionOn){
     //runTest();
-    Test3();
+    LatencyTest();
   } else {
     clearTimeout(timerID);
   }
@@ -60,29 +60,60 @@ chrome.runtime.onMessageExternal.addListener(function(message, sender){
   }
 });
 */
-// Experimental Code.
-var count = 0
-function LatencyTest() {
 
-  if(!this.inUse) {
+// This doesn't work yet either...
+// var count = 0
+// function LatencyTest() {
 
-    this.inUse = true;
-    count++;
-    // Performs ping via native image object.    
-    this.img = new Image();
+//   if(!this.inUse) {
+//     this.inUse = true;
+//     count++;
 
-    this.start = new Date().getTime();
-    this.img.onload = function() { 
-      console.log("Ping latency (" + count + "): " + 
-                        (new Date().getTime() - this.start) ); 
-    };
-    this.img.onerror = function() {
-      console.log("Error with Ping (" + count + ").");
-    };
+//     var startTime = new Date().getTime();
 
-    // Send ping to OpenDNS server while avoiding image cache.
-    this.img.src = "http://208.67.222.222/?cachebreaker="+new Date().getTime();
-    this.timer = setTimeout(function() { Test3(); }, 500);
+//     var xhr = new XMLHttpRequest();
+//     xhr.onreadystatechange = function() {
+//         if (xhr.readyState == 4 && xhr.status==200) {
+//     	  console.log("Ping latency (" + count + "): " + 
+//                         (new Date().getTime() - this.start) );
+//     	  this.inUse = false;
+//         } 
+//     //     else {
+//     //       console.log("Error with Ping (" + count + ").");
+// 		  // if (this.inUse) {
+// 		  //   this.inUse = false;
+// 		  // }	
+//     //     }
+//     };
+//     xhr.open("GET", "http://208.67.222.222", true);
+//     xhr.send();
 
-  }
-}
+//     this.timer = setTimeout(function() { LatencyTest(); }, 1500);
+//   }
+
+//   // if(!this.inUse) {
+
+//   //   this.inUse = true;
+//   //   count++;
+//   //   // Performs ping via native image object.    
+//   //   this.img = new Image();
+
+//   //   this.start = new Date().getTime();
+//   //   this.img.onload = function() { 
+//   //     console.log("Ping latency (" + count + "): " + 
+//   //                       (new Date().getTime() - this.start) );
+//   //     this.inUse = false;
+//   //   };
+//   //   this.img.onerror = function() {
+//   //     console.log("Error with Ping (" + count + ").");
+//   //     if (this.inUse) {
+//   //     	this.inUse = false;
+//   //     }
+//   //   };
+
+//   //   // Send ping to OpenDNS server while avoiding image cache.
+//   //   this.img.src = "http://208.67.222.222"; //?cachebreaker="+new Date().getTime();
+//   //   this.timer = setTimeout(function() { LatencyTest(); }, 500);
+//   // }
+
+// }
