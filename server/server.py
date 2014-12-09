@@ -25,7 +25,7 @@ class URL_Update(Resource):
      isLeaf = True
 
      def render_POST(self, request):
-         print 'Request is:', requesty
+         print 'Request is:', request
 
          request.setHeader('Access-Control-Allow-Origin', '*')
 
@@ -38,7 +38,7 @@ class URL_Update(Resource):
          masterInfo["curURL"] = tokens[0][4:] #first four chars are 'url='
          if masterInfo["counter"] < int(tokens[1].split('=')[1]):
                 #masterInfo["curURL"] = tokens[0][4:]
- masterInfo["counter"] = int(tokens[1].split('=')[1])
+                masterInfo["counter"] = int(tokens[1].split('=')[1])
 
          print "masterURL: " + masterInfo["curURL"]
          print "masterCount: " + str(masterInfo["counter"])

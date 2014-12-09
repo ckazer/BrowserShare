@@ -8,7 +8,7 @@ var website_count = 0;
 var tripup_count = 0;
 var EXPERIMENT_ITERATIONS = 40;
 
-var UPDATE_INTERVAL = 1000;
+var UPDATE_INTERVAL = 500;
 
 function sleep(milliseconds) {
   var start = new Date().getTime();
@@ -19,7 +19,7 @@ function sleep(milliseconds) {
   }
 }
 
-//sleep(1000);
+sleep(50);
 
 function runTest(){
   chrome.tabs.query({'lastFocusedWindow': true, 'active': true}, 
