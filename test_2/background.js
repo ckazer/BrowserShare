@@ -10,6 +10,17 @@ var EXPERIMENT_ITERATIONS = 40;
 
 var UPDATE_INTERVAL = 1000;
 
+function sleep(milliseconds) {
+  var start = new Date().getTime();
+  for (var i = 0; i < 1e7; i++) {
+    if ((new Date().getTime() - start) > milliseconds){
+      break;
+    }
+  }
+}
+
+//sleep(1000);
+
 function runTest(){
   chrome.tabs.query({'lastFocusedWindow': true, 'active': true}, 
       function(curTab){
