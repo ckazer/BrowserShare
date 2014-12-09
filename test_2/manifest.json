@@ -1,0 +1,15 @@
+{
+  "name": "Test_2",
+  "description": "Test code part 2 for Browser Sharing",
+  "version": "9001",
+  "permissions":[
+    "activeTab", "tabs"
+  ],
+  "background": {
+    "scripts": ["background.js"]
+  },
+  "browser_action": {
+    "default_title": "Test_2"
+  },
+  "manifest_version": 2
+}
