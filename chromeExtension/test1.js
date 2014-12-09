@@ -19,7 +19,7 @@
  */
 /*******(」゜ロ゜)」--------------------------------щ(゜ロ゜щ)**************/
 
-var PING_INTERVAL = 5000;
+var PING_INTERVAL = 500;
 // var CHROME_TAB_LOADED = "complete";
 var MASTER_ID = "m";
 var extensionOn = false;
@@ -37,6 +37,8 @@ var cyclingCurTab = undefined;
 var website_count = 0;
 var tripup_count = 0;
 var EXPERIMENT_ITERATIONS = 40;
+var DEBUG = true;
+
 
 chrome.browserAction.onClicked.addListener(function(tab) {
   //Switches extension on/off
@@ -62,7 +64,7 @@ chrome.browserAction.onClicked.addListener(function(tab) {
   } 
 
 });
-
+ 50
 // TODO: FIX? - Sometimes URL updates to server are not sent and 
 //              tripping occurs when this is evoked.
 /* Attempts to catch when Chrome prerendering changes the ID of a tab, 
@@ -131,7 +133,6 @@ chrome.tabs.onUpdated.addListener(function(tabId, changeInfo, tab) {
   updateInflight = false;
 });
 
-
 //TODO: Check user input for valid remote server URL.
 /* initExtension -
  * Sets up connection to server, or returns null if cancelled
@@ -184,6 +185,8 @@ function runExtension() {
             // Three conditions: 1. prevent unnecessary reloading
             //                   2. Are we in the correct tab?
             //                   3. Are we ahead of the update?
+            //
+            prevURL = curTab[0].url;
             if((curTab[0].url != response.curURL) && 
                      (curTab[0].id == launchedTab) && 
                             (counter <= response.counter)){
@@ -193,44 +196,23 @@ function runExtension() {
               // We've caught up to the server, so set the counter to match
               // the server
               counter = response.counter;
+              if(curTab[0].url != response.curURL){
+                console.log("Something has gone horrible wrong.");
+                if (DEBUG){
+                  tripup_count++;
+                }
+              }
             }
             oldURL = response.curURL;
-            cyclingCurTab = curTab;
           });
       }
     });
-
-    // TODO: Move this block into a testing library file?
-    // EXPERIMENT:
-    // Given website visit interval, cycle through array of websites 
-    // and count websites visited before five trip-ups for 40 iterations.
-    if (cyclingCurTab != undefined) {
-        chrome.tabs.update(cyclingCurTab[0].id, 
-            {'url': websites[website_index]}, function(){
-              if (cyclingCurTab[0].url != serverURL) {
-                  tripup_count++;  
-                  console.log("Tripped-up Count: " + tripup_count);
-              }
-              else {
-                  website_count++;
-                  console.log("Current Website Count: " + website_count);
-              }
-              // Quit experiment at 5 trip-ups.
-              if (tripup_count >= 5) {
-                  console.log("Tripped-up Website Count: " + website_count);
-                  stopExtension();
-              }
-            });
-        if (website_index == EXPERIMENT_ITERATIONS) {
-            console.log("Finished Website Count: " + website_count);
-            stopExtension();
+      if(DEBUG){ 50
+        console.log("Trip-ups: " + tripup_count.toString());
+        if (tripup_count > 2){
+          stopExtension();
         }
-        else {
-            website_index++;
-        }
-    }
-    //
-
+      }
       timerId = window.setTimeout(runExtension, PING_INTERVAL);
     }
 }
