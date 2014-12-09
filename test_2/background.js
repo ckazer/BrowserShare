@@ -8,7 +8,7 @@ var website_count = 0;
 var tripup_count = 0;
 var EXPERIMENT_ITERATIONS = 40;
 
-var UPDATE_INTERVAL = 500;
+var UPDATE_INTERVAL = 300;
 
 function sleep(milliseconds) {
   var start = new Date().getTime();
@@ -19,7 +19,7 @@ function sleep(milliseconds) {
   }
 }
 
-sleep(50);
+//sleep(1000);
 
 function runTest(){
   chrome.tabs.query({'lastFocusedWindow': true, 'active': true}, 
@@ -45,3 +45,17 @@ chrome.browserAction.onClicked.addListener(function(tab) {
     clearTimeout(timerID);
   }
 });
+
+//This doesn't work...
+/*
+chrome.runtime.onMessageExternal.addListener(function(message, sender){
+  console.log("Received message!");
+  extensionOn = !(extensionOn);
+
+  if(extensionOn){
+    runTest();
+  } else {
+    clearTimeout(timerID);
+  }
+});
+*/

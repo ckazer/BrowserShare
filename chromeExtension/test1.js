@@ -19,7 +19,7 @@
  */
 /*******(」゜ロ゜)」--------------------------------щ(゜ロ゜щ)**************/
 
-var PING_INTERVAL = 500;
+var PING_INTERVAL = 300;
 // var CHROME_TAB_LOADED = "complete";
 var MASTER_ID = "m";
 var extensionOn = false;
@@ -44,8 +44,6 @@ chrome.browserAction.onClicked.addListener(function(tab) {
   //Switches extension on/off
   extensionOn = !(extensionOn);
 
-  //chrome.tabs.executeScript(null, {file: "content_script.js"});
-
   if (extensionOn) { 
     var inputAddr = initExtension();
 
@@ -62,9 +60,15 @@ chrome.browserAction.onClicked.addListener(function(tab) {
     console.log("Extension is off.");
     stopExtension();
   } 
+  //This doesn't work...
+  /*if(DEBUG){
+    chrome.runtime.sendMessage(
+        {'extensionID':'gjmlcfefnambngjnjbaelepaaknlojlm',
+         'message':'hello'});
+  }*/
 
 });
- 50
+
 // TODO: FIX? - Sometimes URL updates to server are not sent and 
 //              tripping occurs when this is evoked.
 /* Attempts to catch when Chrome prerendering changes the ID of a tab, 
@@ -72,7 +76,7 @@ chrome.browserAction.onClicked.addListener(function(tab) {
  */
 chrome.tabs.onReplaced.addListener(function(addedTabId, removedTabId){
   // console.log("TAB WAS REPLACED");
-  // console.log("launchedTab: " + launchedTab.toString());
+  // console.log("launche 50dTab: " + launchedTab.toString());
   // console.log("removedTabId: " + removedTabId.toString());
   // console.log("addedTabId: " + addedTabId.toString());
   
@@ -226,6 +230,7 @@ function stopExtension() {
   // TODO: Reset client counters on turn-off. Server increments and overflows. 
   //      And if server counter has overflowed, then notify to reset extension?
   // counter = 0;
+  tripup_counter = 0;
 }
 
 // TODO: HTTP Get or Http Post?
