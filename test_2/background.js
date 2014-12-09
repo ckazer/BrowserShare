@@ -40,8 +40,36 @@ chrome.browserAction.onClicked.addListener(function(tab) {
   extensionOn = !(extensionOn);
 
   if(extensionOn){
-    runTest();
+    //runTest();
+    Test3();
   } else {
     clearTimeout(timerID);
   }
 });
+
+// Experimental Code.
+var count = 0
+function LatencyTest() {
+
+  if(!this.inUse) {
+
+    this.inUse = true;
+    count++;
+    // Performs ping via native image object.    
+    this.img = new Image();
+
+    this.start = new Date().getTime();
+    this.img.onload = function() { 
+      console.log("Ping latency (" + count + "): " + 
+                        (new Date().getTime() - this.start) ); 
+    };
+    this.img.onerror = function() {
+      console.log("Error with Ping (" + count + ").");
+    };
+
+    // Send ping to OpenDNS server while avoiding image cache.
+    this.img.src = "http://208.67.222.222/?cachebreaker="+new Date().getTime();
+    this.timer = setTimeout(function() { Test3(); }, 500);
+
+  }
+}
